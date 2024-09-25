@@ -152,18 +152,18 @@ databundles:
     - data/landcover/world_protected_area/protected_areas_tutorial.shp
 
   # global data for hydrobasins
-  bundle_hydrobasins:
-    countries: [Earth]
-    tutorial: false
-    category: hydrobasins
-    destination: "data/hydrobasins"
-    urls:
-      hydrobasins:
-        base_url: https://data.hydrosheds.org/file/HydroBASINS/standard/
-        suffixes: ["af", "ar", "as", "au", "eu", "gr", "na", "sa", "si"]
-    unzip: true
-    output:
-    - data/hydrobasins/hybas_world.shp
+  # bundle_hydrobasins:
+  #   countries: [Earth]
+  #   tutorial: false
+  #   category: hydrobasins
+  #   destination: "data/hydrobasins"
+  #   urls:
+  #     hydrobasins:
+  #       base_url: https://data.hydrosheds.org/file/HydroBASINS/standard/
+  #       suffixes: ["af", "ar", "as", "au", "eu", "gr", "na", "sa", "si"]
+  #   unzip: true
+  #   output:
+  #   - data/hydrobasins/hybas_world.shp
 
   # data bundle containing the data of the data folder common to all regions of the world
   bundle_data_earth:
@@ -257,15 +257,15 @@ databundles:
 
   # cutouts bundle of the cutouts folder for the North American continent
   # Note: this includes nearly the entire north emisphere [long +-180, lat 1-85]. Size about 81GB (zipped)
-  bundle_cutouts_northamerica:
-    countries: [NorthAmerica, Europe]
-    category: cutouts
-    destination: "cutouts"
-    urls:
-      gdrive: https://drive.google.com/file/d/1Ew7rQT0VNBqJW1AUrOrOP2IJKSJS7Uoy/view?usp=sharing
-    output: [cutouts/cutout-2013-era5.nc]
-    disable_by_opt:
-      build_cutout: [all]
+  # bundle_cutouts_northamerica:
+  #   countries: [NorthAmerica, Europe]
+  #   category: cutouts
+  #   destination: "cutouts"
+  #   urls:
+  #     gdrive: https://drive.google.com/file/d/1Ew7rQT0VNBqJW1AUrOrOP2IJKSJS7Uoy/view?usp=sharing
+  #   output: [cutouts/cutout-2013-era5.nc]
+  #   disable_by_opt:
+  #     build_cutout: [all]
 
   # cutouts bundle of the cutouts folder for the Asian continent, except Russia
   # Size about 30GB (zipped)
