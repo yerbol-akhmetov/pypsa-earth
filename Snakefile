@@ -217,21 +217,21 @@ rule build_osm_network:
         countries=config["countries"],
         crs=config["crs"],
     input:
-        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
-        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
-        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
+        generators=BASE_DIR + "/resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
+        lines=BASE_DIR + "/resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
+        substations=BASE_DIR + "/resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
+        country_shapes=BASE_DIR + "/resources/" + RDIR + "shapes/country_shapes.geojson",
     output:
-        lines="resources/" + RDIR + "base_network/all_lines_build_network.csv",
-        converters="resources/" + RDIR + "base_network/all_converters_build_network.csv",
-        transformers="resources/"
+        lines=BASE_DIR + "/resources/" + RDIR + "base_network/all_lines_build_network.csv",
+        converters=BASE_DIR + "/resources/" + RDIR + "base_network/all_converters_build_network.csv",
+        transformers=BASE_DIR + "/resources/"
         + RDIR
         + "base_network/all_transformers_build_network.csv",
-        substations="resources/" + RDIR + "base_network/all_buses_build_network.csv",
+        substations=BASE_DIR + "/resources/" + RDIR + "base_network/all_buses_build_network.csv",
     log:
-        "logs/" + RDIR + "build_osm_network.log",
+        BASE_DIR + "/logs/" + RDIR + "build_osm_network.log",
     benchmark:
-        "benchmarks/" + RDIR + "build_osm_network"
+        BASE_DIR + "/benchmarks/" + RDIR + "build_osm_network"
     script:
         "scripts/build_osm_network.py"
 
