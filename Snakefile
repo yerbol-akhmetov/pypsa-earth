@@ -11,7 +11,7 @@ from shutil import copyfile, move
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
-from _helpers import create_country_list, get_last_commit_message, check_config_version
+from _helpers import create_country_list, get_last_commit_message, check_config_version, BASE_DIR
 from build_demand_profiles import get_load_paths_gegis
 from retrieve_databundle_light import datafiles_retrivedatabundle
 from pathlib import Path
@@ -191,22 +191,22 @@ rule clean_osm_data:
         crs=config["crs"],
         clean_osm_data_options=config["clean_osm_data_options"],
     input:
-        cables="resources/" + RDIR + "osm/raw/all_raw_cables.geojson",
-        generators="resources/" + RDIR + "osm/raw/all_raw_generators.geojson",
-        lines="resources/" + RDIR + "osm/raw/all_raw_lines.geojson",
-        substations="resources/" + RDIR + "osm/raw/all_raw_substations.geojson",
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
-        africa_shape="resources/" + RDIR + "shapes/africa_shape.geojson",
+        cables=BASE_DIR + "/resources/" + RDIR + "osm/raw/all_raw_cables.geojson",
+        generators=BASE_DIR + "/resources/" + RDIR + "osm/raw/all_raw_generators.geojson",
+        lines=BASE_DIR + "/resources/" + RDIR + "osm/raw/all_raw_lines.geojson",
+        substations=BASE_DIR + "/resources/" + RDIR + "osm/raw/all_raw_substations.geojson",
+        country_shapes=BASE_DIR + "/resources/" + RDIR + "shapes/country_shapes.geojson",
+        offshore_shapes=BASE_DIR + "/resources/" + RDIR + "shapes/offshore_shapes.geojson",
+        africa_shape=BASE_DIR + "/resources/" + RDIR + "shapes/africa_shape.geojson",
     output:
-        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
-        generators_csv="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
-        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
-        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
+        generators=BASE_DIR + "/resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
+        generators_csv=BASE_DIR + "/resources/" + RDIR + "osm/clean/all_clean_generators.csv",
+        lines=BASE_DIR + "/resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
+        substations=BASE_DIR + "/resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
     log:
-        "logs/" + RDIR + "clean_osm_data.log",
+        BASE_DIR + "/logs/" + RDIR + "clean_osm_data.log",
     benchmark:
-        "benchmarks/" + RDIR + "clean_osm_data"
+        BASE_DIR + "/benchmarks/" + RDIR + "clean_osm_data"
     script:
         "scripts/clean_osm_data.py"
 
