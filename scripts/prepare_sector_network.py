@@ -869,11 +869,15 @@ def define_spatial(nodes, options):
 
     # ammonia
 
-    spatial.ammonia = SimpleNamespace()
-
     if options["ammonia"]["enable"]:
-        spatial.ammonia.nodes = nodes + " NH3"
-        spatial.ammonia.locations = nodes
+        spatial.ammonia = SimpleNamespace()
+        if options["ammonia"]["spatial_ammonia"]:
+            spatial.ammonia.nodes = nodes + " NH3"
+            spatial.ammonia.locations = nodes
+        else:
+            spatial.ammonia.nodes = ["Earth NH3"]
+            spatial.ammonia.locations = ["Earth"]
+
         spatial.ammonia.df = pd.DataFrame(vars(spatial.ammonia), index=spatial.nodes)
 
     return spatial
