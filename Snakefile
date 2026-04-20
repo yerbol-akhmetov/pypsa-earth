@@ -2060,6 +2060,7 @@ rule build_industry_demand:  #default data
         base_year=config["demand_data"]["base_year"],
         industry_util_factor=config["sector"]["industry_util_factor"],
         aluminium_year=config["demand_data"]["aluminium_year"],
+        ammonia_enable=config["sector"]["ammonia"]["enable"],
         ammonia_gas_mwh_per_t=config["sector"]["ammonia"]["gas_MWh_per_tNH3"],
         ammonia_elec_mwh_per_t=config["sector"]["ammonia"]["elec_MWh_per_tNH3"],
         ammonia_year=config["sector"]["ammonia"]["production_year"],
