@@ -12,6 +12,8 @@ This part of documentation collects descriptive release notes to capture the mai
 
 **New Features and Major Changes**
 
+* Add ammonia industry explicitly [PR #1783](https://github.com/pypsa-meets-earth/pypsa-earth/pull/1783)
+
 * Revise implementation of myopic optimization [PR #1722](https://github.com/pypsa-meets-earth/pypsa-earth/pull/1722)
 
 * Migrate all cost data processing to ``process_cost_data.py`` [PR #1719](https://github.com/pypsa-meets-earth/pypsa-earth/pull/1719)
