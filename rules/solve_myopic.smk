@@ -165,13 +165,3 @@ rule solve_network_myopic:
         )
     script:
         "../scripts/solve_network.py"
-
-
-rule solve_sector_networks_myopic:
-    input:
-        networks=expand(
-            RESDIR
-            + "postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
-            **config["scenario"],
-            **config["costs"],
-        ),
