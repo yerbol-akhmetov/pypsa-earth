@@ -21,6 +21,7 @@ from _helpers import (
     get_last_commit_message,
     migrate_config,
     update_cutout_config,
+    script_path_provider,
 )
 from build_demand_profiles import get_load_paths_gegis
 
@@ -66,6 +67,8 @@ SDIR = config["summary_dir"].strip("/") + f"/{SECDIR}"
 RESDIR = config["results_dir"].strip("/") + f"/{SECDIR}"
 
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
+
+scripts = script_path_provider(Path(BASE_DIR))
 
 
 wildcard_constraints:

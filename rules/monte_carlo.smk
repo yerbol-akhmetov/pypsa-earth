@@ -24,7 +24,7 @@ rule monte_carlo:
     resources:
         mem_mb=4000,
     script:
-        "../scripts/monte_carlo.py"
+        scripts("monte_carlo.py")
 
 
 rule solve_monte:
@@ -69,7 +69,7 @@ rule solve_network:
     shadow:
         "copy-minimal" if os.name == "nt" else "shallow"
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
 
 
 rule solve_all_networks_monte:

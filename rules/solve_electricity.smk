@@ -34,4 +34,4 @@ rule solve_network:
     shadow:
         "copy-minimal" if os.name == "nt" else "shallow"
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")

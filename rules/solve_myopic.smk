@@ -51,7 +51,7 @@ rule add_existing_baseyear:
         RESDIR
         +"benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}"
     script:
-        "../scripts/add_existing_baseyear.py"
+        scripts("add_existing_baseyear.py")
 
 
 def input_profile_tech_brownfield(w):
@@ -116,7 +116,7 @@ rule add_brownfield:
             + "benchmarks/add_brownfield/elec_s{simpl}_ec_{clusters}_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}"
         )
     script:
-        "../scripts/add_brownfield.py"
+        scripts("add_brownfield.py")
 
 
 ruleorder: add_existing_baseyear > add_brownfield
@@ -164,4 +164,4 @@ rule solve_network_myopic:
             + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}"
         )
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
