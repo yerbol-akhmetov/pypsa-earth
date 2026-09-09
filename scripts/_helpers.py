@@ -2493,6 +2493,6 @@ def script_path_provider(project_dir: Path) -> Callable[[str], Path]:
     """
 
     def _get_script_path(script: str) -> Path:
-        return Path("file://") / project_dir / "scripts" / script
+        return project_dir / "scripts" / script
 
     return _get_script_path
