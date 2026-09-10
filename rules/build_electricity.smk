@@ -15,10 +15,10 @@ def retrieve_subregion(script_name):
         return {}
 
     method = subregion_config["method"]
-    subregion_offshore = "resources/" + RDIR + "shapes/offshore_shapes.geojson"
+    subregion_offshore = rules.build_shapes.output.offshore_shapes
 
     if method == "gadm":
-        subregion_shapes = "resources/" + RDIR + "shapes/subregion_shapes.geojson"
+        subregion_shapes = rules.build_shapes.output.subregion_shapes
     elif method == "custom":
         subregion_shapes = subregion_config["path_custom_shapes"]
         if subregion_config["path_custom_offshore"]:
@@ -29,70 +29,8 @@ def retrieve_subregion(script_name):
     return {
         "subregion_shapes": subregion_shapes,
         "subregion_offshore": subregion_offshore,
-        "original_shapes": "resources/" + RDIR + "shapes/country_shapes.geojson",
+        "original_shapes": rules.build_shapes.output.country_shapes,
     }
-
-
-rule clean_osm_data:
-    params:
-        crs=config["crs"],
-        clean_osm_data_options=config["osm"]["clean_osm_data"],
-    input:
-        cables="resources/" + RDIR + "osm/raw/all_raw_cables.geojson",
-        generators="resources/" + RDIR + "osm/raw/all_raw_generators.geojson",
-        lines="resources/" + RDIR + "osm/raw/all_raw_lines.geojson",
-        substations="resources/" + RDIR + "osm/raw/all_raw_substations.geojson",
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
-        extended_country_shape="resources/"
-        + RDIR
-        + "shapes/extended_country_shape.geojson",
-    output:
-        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
-        generators_csv="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
-        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
-        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
-    log:
-        "logs/" + RDIR + "clean_osm_data.log",
-    benchmark:
-        "benchmarks/" + RDIR + "clean_osm_data"
-    script:
-        scripts("clean_osm_data.py")
-
-
-rule build_osm_network:
-    params:
-        build_osm_network=config.get("osm", {}).get("build_osm_network", {}),
-        countries=config["countries"],
-        crs=config["crs"],
-    input:
-        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
-        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
-        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-    output:
-        lines="resources/" + RDIR + "base_network/all_lines_build_network.csv",
-        converters="resources/" + RDIR + "base_network/all_converters_build_network.csv",
-        transformers="resources/"
-        + RDIR
-        + "base_network/all_transformers_build_network.csv",
-        substations="resources/" + RDIR + "base_network/all_buses_build_network.csv",
-        lines_geo="resources/" + RDIR + "base_network/all_lines_build_network.geojson",
-        converters_geo="resources/"
-        + RDIR
-        + "base_network/all_converters_build_network.geojson",
-        transformers_geo="resources/"
-        + RDIR
-        + "base_network/all_transformers_build_network.geojson",
-        substations_geo="resources/"
-        + RDIR
-        + "base_network/all_buses_build_network.geojson",
-    log:
-        "logs/" + RDIR + "build_osm_network.log",
-    benchmark:
-        "benchmarks/" + RDIR + "build_osm_network"
-    script:
-        scripts("build_osm_network.py")
 
 
 rule build_shapes:
@@ -128,6 +66,66 @@ rule build_shapes:
         scripts("build_shapes.py")
 
 
+rule clean_osm_data:
+    params:
+        crs=config["crs"],
+        clean_osm_data_options=config["osm"]["clean_osm_data"],
+    input:
+        cables=rules.download_osm_data.output.cables,
+        generators=rules.download_osm_data.output.generators,
+        lines=rules.download_osm_data.output.lines,
+        substations=rules.download_osm_data.output.substations,
+        country_shapes=rules.build_shapes.output.country_shapes,
+        offshore_shapes=rules.build_shapes.output.offshore_shapes,
+        extended_country_shape=rules.build_shapes.output.extended_country_shape,
+    output:
+        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
+        generators_csv="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
+        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
+        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
+    log:
+        "logs/" + RDIR + "clean_osm_data.log",
+    benchmark:
+        "benchmarks/" + RDIR + "clean_osm_data"
+    script:
+        scripts("clean_osm_data.py")
+
+
+rule build_osm_network:
+    params:
+        build_osm_network=config.get("osm", {}).get("build_osm_network", {}),
+        countries=config["countries"],
+        crs=config["crs"],
+    input:
+        generators=rules.clean_osm_data.output.generators,
+        lines=rules.clean_osm_data.output.lines,
+        substations=rules.clean_osm_data.output.substations,
+        country_shapes=rules.build_shapes.output.country_shapes,
+    output:
+        lines="resources/" + RDIR + "base_network/all_lines_build_network.csv",
+        converters="resources/" + RDIR + "base_network/all_converters_build_network.csv",
+        transformers="resources/"
+        + RDIR
+        + "base_network/all_transformers_build_network.csv",
+        substations="resources/" + RDIR + "base_network/all_buses_build_network.csv",
+        lines_geo="resources/" + RDIR + "base_network/all_lines_build_network.geojson",
+        converters_geo="resources/"
+        + RDIR
+        + "base_network/all_converters_build_network.geojson",
+        transformers_geo="resources/"
+        + RDIR
+        + "base_network/all_transformers_build_network.geojson",
+        substations_geo="resources/"
+        + RDIR
+        + "base_network/all_buses_build_network.geojson",
+    log:
+        "logs/" + RDIR + "build_osm_network.log",
+    benchmark:
+        "benchmarks/" + RDIR + "build_osm_network"
+    script:
+        scripts("build_osm_network.py")
+
+
 rule base_network:
     params:
         voltages=config["electricity"]["voltages"],
@@ -139,19 +137,15 @@ rule base_network:
         countries=config["countries"],
         base_network=config["base_network"],
     input:
-        osm_buses="resources/" + RDIR + "base_network/all_buses_build_network.csv",
-        osm_lines="resources/" + RDIR + "base_network/all_lines_build_network.csv",
-        osm_converters="resources/"
-        + RDIR
-        + "base_network/all_converters_build_network.csv",
-        osm_transformers="resources/"
-        + RDIR
-        + "base_network/all_transformers_build_network.csv",
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
+        osm_buses=rules.build_osm_network.output.substations,
+        osm_lines=rules.build_osm_network.output.lines,
+        osm_converters=rules.build_osm_network.output.converters,
+        osm_transformers=rules.build_osm_network.output.transformers,
+        country_shapes=rules.build_shapes.output.country_shapes,
+        offshore_shapes=rules.build_shapes.output.offshore_shapes,
         custom_line_types="data/custom_line_types.csv",
     output:
-        "networks/" + RDIR + "base.nc",
+        network="networks/" + RDIR + "base.nc",
     log:
         "logs/" + RDIR + "base_network.log",
     benchmark:
@@ -170,14 +164,14 @@ rule build_bus_regions:
         countries=config["countries"],
     input:
         **retrieve_subregion("cluster_network"),
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
-        base_network="networks/" + RDIR + "base.nc",
+        country_shapes=rules.build_shapes.output.country_shapes,
+        offshore_shapes=rules.build_shapes.output.offshore_shapes,
+        base_network=rules.base_network.output.network,
         #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
         #using this line instead of the following will test updated gadm shapes for MA.
         #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
         #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
-        gadm_shapes="resources/" + RDIR + "shapes/gadm_shapes.geojson",
+        gadm_shapes=rules.build_shapes.output.gadm_shapes,
     output:
         regions_onshore="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
         regions_offshore="resources/" + RDIR + "bus_regions/regions_offshore.geojson",
@@ -200,8 +194,8 @@ if config["enable"].get("build_cutout", False):
             cutouts=config["atlite"]["cutouts"],
         input:
             check=terminate_if_cutout_exists,
-            onshore_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-            offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
+            onshore_shapes=rules.build_shapes.output.country_shapes,
+            offshore_shapes=rules.build_shapes.output.offshore_shapes,
         output:
             "cutouts/" + CDIR + "{cutout}.nc",
         log:
@@ -228,8 +222,8 @@ if config["enable"].get("build_natura_raster", False):
                 "cutouts/" + CDIR + "{cutout}.nc",
                 cutout=[c["cutout"] for _, c in config["renewable"].items()],
             ),
-            country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-            offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
+            country_shapes=rules.build_shapes.output.country_shapes,
+            offshore_shapes=rules.build_shapes.output.offshore_shapes,
         output:
             "resources/" + RDIR + "natura.tiff",
         log:
@@ -259,8 +253,8 @@ rule build_demand_profiles:
         load_options=config["load_options"],
         countries=config["countries"],
     input:
-        base_network="networks/" + RDIR + "base.nc",
-        regions="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
+        base_network=rules.base_network.output.network,
+        regions=rules.build_bus_regions.output.regions_onshore,
         load=branch(
             config["load_options"].get("source", "gegis") in ["gegis", "ssp"],
             get_load_paths_gegis("data", config),
@@ -270,9 +264,9 @@ rule build_demand_profiles:
         #using this line instead of the following will test updated gadm shapes for MA.
         #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
         #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
-        gadm_shapes="resources/" + RDIR + "shapes/gadm_shapes.geojson",
+        gadm_shapes=rules.build_shapes.output.gadm_shapes,
     output:
-        "resources/" + RDIR + "demand_profiles.csv",
+        demand_profiles="resources/" + RDIR + "demand_profiles.csv",
     log:
         "logs/" + RDIR + "build_demand_profiles.log",
     benchmark:
@@ -290,7 +284,7 @@ def inputs_hydro(w):
             "hydro_capacities": "data/hydro_capacities.csv",
             "eia_hydro_generation": "data/eia_hydro_annual_generation.csv",
             "irena_stats": "data/IRENA_Statistics_Extract_2025H2.xlsx",
-            "powerplants": "resources/" + RDIR + "powerplants.csv",
+            "powerplants": rules.build_powerplants.output.powerplants,
             "hydrobasins": config["renewable"]["hydro"]["resource"]["hydrobasins"],
         }
         return HYDRO_PROFILES
@@ -309,12 +303,12 @@ rule build_renewable_profiles:
         natura="resources/" + RDIR + "natura.tiff",
         copernicus="data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         gebco="data/gebco/GEBCO_2025_sub_ice.nc",
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
+        country_shapes=rules.build_shapes.output.country_shapes,
+        offshore_shapes=rules.build_shapes.output.offshore_shapes,
         regions=lambda w: (
-            "resources/" + RDIR + "bus_regions/regions_onshore.geojson"
+            rules.build_bus_regions.output.regions_onshore
             if w.technology in ("onwind", "solar", "hydro", "csp")
-            else "resources/" + RDIR + "bus_regions/regions_offshore.geojson"
+            else rules.build_bus_regions.output.regions_offshore
         ),
         cutout=lambda w: "cutouts/"
         + CDIR
@@ -342,19 +336,19 @@ rule build_powerplants:
         powerplants_filter=config["electricity"]["powerplants_filter"],
         custom_powerplants=config["electricity"]["custom_powerplants"],
     input:
-        base_network="networks/" + RDIR + "base.nc",
+        base_network=rules.base_network.output.network,
         pm_config="configs/powerplantmatching_config.yaml",
         custom_powerplants=branch(
             config["electricity"]["custom_powerplants"]["method"] is not False,
             config["electricity"]["custom_powerplants"]["filepaths"],
             [],
         ),
-        osm_powerplants="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
+        osm_powerplants=rules.clean_osm_data.output.generators_csv,
         #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
         #using this line instead of the following will test updated gadm shapes for MA.
         #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
         #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
-        gadm_shapes="resources/" + RDIR + "shapes/gadm_shapes.geojson",
+        gadm_shapes=rules.build_shapes.output.gadm_shapes,
     output:
         powerplants="resources/" + RDIR + "powerplants.csv",
         powerplants_osm2pm="resources/" + RDIR + "powerplants_osm2pm.csv",
@@ -369,20 +363,21 @@ rule build_powerplants:
         scripts("build_powerplants.py")
 
 
+if config["enable"].get("retrieve_cost_data", True):
+    cost_data = rules.retrieve_cost_data.output.costs
+else:
+    cost_data = "data/costs.csv"
+
 rule process_cost_data:
     params:
         costs=config["costs"],
         max_hours=config["electricity"]["max_hours"],
         storage_techs=config["storage_techs"],
     input:
-        network="networks/" + RDIR + "base.nc",
-        costs=branch(
-            config["enable"].get("retrieve_cost_data", True),
-            "resources/" + RDIR + "costs_{year}.csv",
-            "data/costs.csv",
-        ),
+        network=rules.base_network.output.network,
+        costs=cost_data,
     output:
-        "resources/" + RDIR + "costs_{year}_{scope}.csv",
+        costs="resources/" + RDIR + "costs_{year}_{scope}.csv",
     log:
         "logs/" + RDIR + "build_cost_data_{year}_{scope}.log",
     benchmark:
@@ -408,9 +403,9 @@ rule add_electricity:
         battery_techs=config["storage_techs"]["battery"],
     input:
         **{
-            f"profile_{tech}": "resources/"
-            + RDIR
-            + f"renewable_profiles/profile_{tech}.nc"
+            f"profile_{tech}": rules.build_renewable_profiles.output.profile.format(
+                technology=tech
+            )
             for tech in config["renewable"]
             if tech in config["electricity"]["renewable_carriers"]
         },
@@ -420,19 +415,22 @@ rule add_electricity:
             for attr, fn in d.items()
             if str(fn).startswith("data/")
         },
-        base_network="networks/" + RDIR + "base.nc",
-        tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
-        powerplants="resources/" + RDIR + "powerplants.csv",
+        base_network=rules.base_network.output.network,
+        tech_costs=rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"],
+            scope="elec",
+        ),
+        powerplants=rules.build_powerplants.output.powerplants,
         #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
         #using this line instead of the following will test updated gadm shapes for MA.
         #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
         #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
-        gadm_shapes="resources/" + RDIR + "shapes/gadm_shapes.geojson",
+        gadm_shapes=rules.build_shapes.output.gadm_shapes,
         hydro_capacities="data/hydro_capacities.csv",
-        demand_profiles="resources/" + RDIR + "demand_profiles.csv",
+        demand_profiles=rules.build_demand_profiles.output.demand_profiles,
         nuclear_p_max_pu="data/nuclear_p_max_pu.csv",
     output:
-        "networks/" + RDIR + "elec.nc",
+        network="networks/" + RDIR + "elec.nc",
     log:
         "logs/" + RDIR + "add_electricity.log",
     benchmark:
@@ -459,10 +457,13 @@ rule simplify_network:
         focus_weights=config.get("focus_weights", None),
     input:
         **retrieve_subregion("simplify_network"),
-        network="networks/" + RDIR + "elec.nc",
-        tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
-        regions_onshore="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
-        regions_offshore="resources/" + RDIR + "bus_regions/regions_offshore.geojson",
+        network=rules.add_electricity.output.network,
+        tech_costs=rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"],
+            scope="elec",
+        ),
+        regions_onshore=rules.build_bus_regions.output.regions_onshore,
+        regions_offshore=rules.build_bus_regions.output.regions_offshore,
     output:
         network="networks/" + RDIR + "elec_s{simpl}.nc",
         regions_onshore="resources/"
@@ -500,26 +501,24 @@ rule cluster_network:
         custom_busmap=config["enable"].get("custom_busmap", False),
     input:
         **retrieve_subregion("cluster_network"),
-        network="networks/" + RDIR + "elec_s{simpl}.nc",
-        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-        regions_onshore="resources/"
-        + RDIR
-        + "bus_regions/regions_onshore_elec_s{simpl}.geojson",
-        regions_offshore="resources/"
-        + RDIR
-        + "bus_regions/regions_offshore_elec_s{simpl}.geojson",
-        #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
+        network=rules.simplify_network.output.network,
+        country_shapes=rules.build_shapes.output.country_shapes,
+        regions_onshore=rules.simplify_network.output.regions_onshore,
+        regions_offshore=rules.simplify_network.output.regions_offshore,
         #using this line instead of the following will test updated gadm shapes for MA.
         #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
         #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
-        gadm_shapes="resources/" + RDIR + "shapes/gadm_shapes.geojson",
+        gadm_shapes=rules.build_shapes.output.gadm_shapes,
         # busmap=ancient('resources/" + RDIR + "bus_regions/busmap_elec_s{simpl}.csv'),
         custom_busmap=(
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
             if config["enable"].get("custom_busmap", False)
             else []
         ),
-        tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
+        tech_costs=rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"],
+            scope="elec",
+        ),
     output:
         network=branch(
             config["augmented_line_connection"].get("add_to_snakefile", False) == True,
@@ -554,14 +553,13 @@ if config["augmented_line_connection"].get("add_to_snakefile") == True:
             hvdc_as_lines=config["electricity"]["hvdc_as_lines"],
             electricity=config["electricity"],
         input:
-            tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
-            network="networks/" + RDIR + "elec_s{simpl}_{clusters}_pre_augmentation.nc",
-            regions_onshore="resources/"
-            + RDIR
-            + "bus_regions/regions_onshore_elec_s{simpl}_{clusters}.geojson",
-            regions_offshore="resources/"
-            + RDIR
-            + "bus_regions/regions_offshore_elec_s{simpl}_{clusters}.geojson",
+            tech_costs=rules.process_cost_data.output.costs.format(
+                year=config["costs"]["year"],
+                scope="elec",
+            ),
+            network=rules.cluster_network.output.network,
+            regions_onshore=rules.cluster_network.output.regions_onshore,
+            regions_offshore=rules.cluster_network.output.regions_offshore,
         output:
             network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
         log:
@@ -574,6 +572,10 @@ if config["augmented_line_connection"].get("add_to_snakefile") == True:
         script:
             scripts("augmented_line_connections.py")
 
+    clustered_network = rules.augmented_line_connections.output.network
+
+else:
+    clustered_network = rules.cluster_network.output.network
 
 rule add_extra_components:
     params:
@@ -582,10 +584,13 @@ rule add_extra_components:
         electricity=config["electricity"],
         csp_model=config["renewable"]["csp"]["csp_model"],
     input:
-        network="networks/" + RDIR + "elec_s{simpl}_{clusters}.nc",
-        tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
+        network=clustered_network,
+        tech_costs=rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"],
+            scope="elec",
+        ),
     output:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
     log:
         "logs/" + RDIR + "add_extra_components/elec_s{simpl}_{clusters}.log",
     benchmark:
@@ -601,7 +606,7 @@ if config["co2"]["automatic_emission"]["enable"]:
 
     rule build_co2_emissions:
         input:
-            edgar="data/co2_emissions/v60_CO2_excl_short-cycle_org_C_1970_2018.xls",
+            edgar=rules.retrieve_emissions.output.edgar_xlsx,
         output:
             emissions="resources/" + RDIR + "co2_emissions_elec_and_heat.csv",
         log:
@@ -613,6 +618,10 @@ if config["co2"]["automatic_emission"]["enable"]:
         script:
             scripts("build_co2_emissions.py")
 
+    emissions_input = {"emissions": rules.build_co2_emissions.output.emissions}
+
+else:
+    emissions_input = {}
 
 rule prepare_network:
     params:
@@ -622,14 +631,14 @@ rule prepare_network:
         electricity=config["electricity"],
         co2=config["co2"],
     input:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
-        **branch(
-            config["co2"]["automatic_emission"]["enable"],
-            {"emissions": "resources/" + RDIR + "co2_emissions_elec_and_heat.csv"},
+        network=rules.add_extra_components.output.network,
+        **emissions_input,
+        tech_costs=rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"],
+            scope="elec",
         ),
-        tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
     output:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         "logs/" + RDIR + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
     benchmark:
