@@ -92,7 +92,6 @@ include: "rules/common.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
-include: "rules/collect.smk"
 include: "rules/postprocess.smk"
 include: "rules/scenarios.smk"
 
@@ -114,6 +113,9 @@ if config["foresight"] == "overnight":
 if config["foresight"] == "myopic":
 
     include: "rules/solve_myopic.smk"
+
+
+include: "rules/collect.smk"
 
 
 rule clean:

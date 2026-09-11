@@ -45,7 +45,7 @@ rule make_summary:
         input_make_summary,
         tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
     output:
-        directory(
+        summary=directory(
             "results/"
             + RDIR
             + "summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
@@ -64,7 +64,7 @@ rule plot_summary:
         + RDIR
         + "summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}",
     output:
-        "results/"
+        plot="results/"
         + RDIR
         + "plots/summary_{summary}_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}",
     log:

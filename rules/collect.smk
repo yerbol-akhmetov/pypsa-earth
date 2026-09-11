@@ -5,19 +5,15 @@
 
 rule solve_all_networks:
     input:
-        expand(
-            "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-            **config["scenario"],
-        ),
+        expand(rules.solve_network.output.network, **config["scenario"]),
 
 
 rule plot_all_p_nom:
     input:
         expand(
-            "results/"
-            + RDIR
-            + "plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_p_nom.{ext}",
+            rules.plot_network.output.only_map,
             **config["scenario"],
+            attr=["p_nom"],
             ext=["png", "pdf"],
         ),
 
@@ -25,9 +21,7 @@ rule plot_all_p_nom:
 rule make_all_summaries:
     input:
         expand(
-            "results/"
-            + RDIR
-            + "summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}",
+            rules.make_summary.output.summary,
             **config["scenario"],
             country=["all"] + config["countries"],
         ),
@@ -36,9 +30,7 @@ rule make_all_summaries:
 rule plot_all_summaries:
     input:
         expand(
-            "results/"
-            + RDIR
-            + "plots/summary_{summary}_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}",
+            rules.plot_summary.output.plot,
             summary=["energy", "costs"],
             **config["scenario"],
             country=["all"] + config["countries"],
@@ -49,18 +41,18 @@ rule plot_all_summaries:
 rule prepare_sector_networks:
     input:
         expand(
-            RESDIR
-            + "prenetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
+            rules.prepare_sector_network.output.network,
             **config["scenario"],
             **config["costs"],
         ),
+
+
+if config["foresight"] == "overnight":
+    sector_postnetwork = rules.solve_sector_network.output.network
+elif config["foresight"] == "myopic":
+    sector_postnetwork = rules.solve_network_myopic.output.network
 
 
 rule solve_sector_networks:
     input:
-        expand(
-            RESDIR
-            + "postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
-            **config["scenario"],
-            **config["costs"],
-        ),
+        expand(sector_postnetwork, **config["scenario"], **config["costs"]),
