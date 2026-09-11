@@ -7,9 +7,9 @@ rule monte_carlo:
     params:
         monte_carlo=config["monte_carlo"],
     input:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=rules.prepare_network.output.network,
     output:
-        "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
+        network="networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
     log:
         "logs/"
         + RDIR
@@ -29,10 +29,7 @@ rule monte_carlo:
 
 rule solve_monte:
     input:
-        expand(
-            "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
-            **config["scenario"],
-        ),
+        expand(rules.monte_carlo.output.network, **config["scenario"]),
 
 
 rule solve_network:
@@ -41,10 +38,10 @@ rule solve_network:
         augmented_line_connection=config["augmented_line_connection"],
         policy_config=config["policy_config"],
     input:
-        network="networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
+        network=rules.monte_carlo.output.network,
         agg_p_nom_minmax=config["electricity"]["agg_p_nom_limits"]["file"],  # ensure the CSV with capacity constraints is copied into the shadow directory (needed on Windows, since shadowed scripts can’t access files outside `input`)
     output:
-        "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
+        network="results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
     log:
         solver=os.path.normpath(
             "logs/"
@@ -74,9 +71,4 @@ rule solve_network:
 
 rule solve_all_networks_monte:
     input:
-        expand(
-            "results/"
-            + RDIR
-            + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
-            **config["scenario"],
-        ),
+        expand(rules.solve_network.output.network, **config["scenario"]),
