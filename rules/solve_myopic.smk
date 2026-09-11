@@ -25,7 +25,9 @@ rule add_existing_baseyear:
         # clustered_pop_layout="resources/"
         # + SECDIR
         # + "population_shares/pop_layout_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec")
+        costs=rules.process_cost_data.output.costs.format(
+            year="{planning_horizons}", scope="sec"
+        ),
     output:
         network=RESDIR
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
@@ -82,7 +84,9 @@ rule add_brownfield:
         cluster_busmap=rules.cluster_network.output.busmap,
         network=rules.add_export.output.network,
         network_p=solved_previous_horizon,  #solved network at previous time step
-        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec"),
+        costs=rules.process_cost_data.output.costs.format(
+            year="{planning_horizons}", scope="sec"
+        ),
         cop_soil_total=rules.build_cop_profiles.output.cop_soil_total,
         cop_air_total=rules.build_cop_profiles.output.cop_air_total,
     output:
@@ -119,7 +123,9 @@ rule solve_network_myopic:
     input:
         network=RESDIR
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
-        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec"),
+        costs=rules.process_cost_data.output.costs.format(
+            year="{planning_horizons}", scope="sec"
+        ),
         configs=rules.copy_config.output.config,  # included to trigger copy_config rule
         agg_p_nom_minmax=config["electricity"]["agg_p_nom_limits"]["file"],  # ensure the CSV with capacity constraints is copied into the shadow directory (needed on Windows, since shadowed scripts can’t access files outside `input`)
     output:
