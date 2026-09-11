@@ -47,12 +47,6 @@ rule prepare_sector_networks:
         ),
 
 
-if config["foresight"] == "overnight":
-    sector_postnetwork = rules.solve_sector_network.output.network
-elif config["foresight"] == "myopic":
-    sector_postnetwork = rules.solve_network_myopic.output.network
-
-
 rule solve_sector_networks:
     input:
         expand(sector_postnetwork, **config["scenario"], **config["costs"]),

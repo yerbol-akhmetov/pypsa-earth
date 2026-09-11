@@ -11,8 +11,12 @@ def input_make_summary(w):
             ll = [l for l in ll if l[0] == w.ll[0]]
     else:
         ll = w.ll
-    return ["resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv"] + expand(
-        "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+    return [
+        rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"], scope="elec"
+        )
+    ] + expand(
+        rules.solve_network.output.network,
         ll=ll,
         **{
             k: config["scenario"][k] if getattr(w, k) == "all" else getattr(w, k)
@@ -21,20 +25,10 @@ def input_make_summary(w):
     )
 
 
-rule copy_config:
-    params:
-        summary_dir=config["summary_dir"],
-        run=run,
-    output:
-        folder=directory(SDIR + "configs"),
-        config=SDIR + "configs/config.yaml",
-    threads: 1
-    resources:
-        mem_mb=1000,
-    benchmark:
-        SDIR + "benchmarks/copy_config"
-    script:
-        scripts("copy_config.py")
+if config["foresight"] == "overnight":
+    sector_postnetwork = rules.solve_sector_network.output.network
+elif config["foresight"] == "myopic":
+    sector_postnetwork = rules.solve_network_myopic.output.network
 
 
 rule make_summary:
@@ -43,7 +37,9 @@ rule make_summary:
         scenario=config["scenario"],
     input:
         input_make_summary,
-        tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
+        tech_costs=rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"], scope="elec"
+        ),
     output:
         summary=directory(
             "results/"
@@ -60,9 +56,7 @@ rule make_summary:
 
 rule plot_summary:
     input:
-        "results/"
-        + RDIR
-        + "summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}",
+        rules.make_summary.output.summary,
     output:
         plot="results/"
         + RDIR
@@ -80,13 +74,11 @@ rule plot_network:
         electricity=config["electricity"],
         plotting=config["plotting"],
     input:
-        network="results/"
-        + RDIR
-        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        extended_country_shape="resources/"
-        + RDIR
-        + "shapes/extended_country_shape.geojson",
-        tech_costs="resources/" + RDIR + f"costs_{config['costs']['year']}_elec.csv",
+        network=rules.solve_network.output.network,
+        extended_country_shape=rules.build_shapes.output.extended_country_shape,
+        tech_costs=rules.process_cost_data.output.costs.format(
+            year=config["costs"]["year"], scope="elec"
+        ),
     output:
         only_map="results/"
         + RDIR
@@ -118,8 +110,7 @@ rule make_statistics:
 
 rule plot_sector_network:
     input:
-        network=RESDIR
-        + "postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
+        network=sector_postnetwork,
     output:
         map=RESDIR
         + "maps/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}-costs-all_{planning_horizons}_{discountrate}.pdf",
@@ -146,16 +137,12 @@ rule make_sector_summary:
         h2export_qty=config["export"]["h2export"],
         foresight=config["foresight"],
     input:
-        networks=expand(
-            RESDIR
-            + "postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
-            **config["scenario"],
-            **config["costs"],
+        networks=expand(sector_postnetwork, **config["scenario"], **config["costs"]),
+        costs=rules.process_cost_data.output.costs.format(
+            year="{planning_horizons}", scope="sec"
         ),
-        costs="resources/" + RDIR + "costs_{planning_horizons}_sec.csv",
         plots=expand(
-            RESDIR
-            + "maps/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}-costs-all_{planning_horizons}_{discountrate}.pdf",
+            rules.plot_sector_network.output.map,
             **config["scenario"],
             **config["costs"],
         ),
@@ -186,9 +173,9 @@ rule make_sector_summary:
 
 rule plot_sector_summary:
     input:
-        costs=SDIR + "csvs/costs.csv",
-        energy=SDIR + "csvs/energy.csv",
-        balances=SDIR + "csvs/supply_energy.csv",
+        costs=rules.make_sector_summary.output.costs,
+        energy=rules.make_sector_summary.output.energy,
+        balances=rules.make_sector_summary.output.supply_energy,
     output:
         costs=SDIR + "graphs/costs.pdf",
         energy=SDIR + "graphs/energy.pdf",
@@ -206,8 +193,7 @@ rule prepare_db:
     params:
         tech_colors=config["plotting"]["tech_colors"],
     input:
-        network=RESDIR
-        + "postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
+        network=sector_postnetwork,
     output:
         db=RESDIR
         + "summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}-costs-all_{planning_horizons}_{discountrate}.csv",

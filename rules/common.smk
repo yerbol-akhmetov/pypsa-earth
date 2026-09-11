@@ -47,3 +47,19 @@ def memory(w):
         return int(factor * (18000 + 180 * 20))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
+
+
+rule copy_config:
+    params:
+        summary_dir=config["summary_dir"],
+        run=run,
+    output:
+        folder=directory(SDIR + "configs"),
+        config=SDIR + "configs/config.yaml",
+    threads: 1
+    resources:
+        mem_mb=1000,
+    benchmark:
+        SDIR + "benchmarks/copy_config"
+    script:
+        scripts("copy_config.py")
