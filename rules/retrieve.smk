@@ -113,7 +113,7 @@ if config["enable"].get("retrieve_cost_data", True):
                 keep_local=True,
             ),
         output:
-            "resources/" + RDIR + "costs_{year}.csv",
+            costs="resources/" + RDIR + "costs_{year}.csv",
         log:
             "logs/" + RDIR + "retrieve_cost_data_{year}.log",
         resources:
