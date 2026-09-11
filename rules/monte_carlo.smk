@@ -41,7 +41,9 @@ rule solve_network:
         network=rules.monte_carlo.output.network,
         agg_p_nom_minmax=config["electricity"]["agg_p_nom_limits"]["file"],  # ensure the CSV with capacity constraints is copied into the shadow directory (needed on Windows, since shadowed scripts can’t access files outside `input`)
     output:
-        network="results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
+        network="results/"
+        + RDIR
+        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{unc}.nc",
     log:
         solver=os.path.normpath(
             "logs/"

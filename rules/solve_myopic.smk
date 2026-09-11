@@ -4,15 +4,9 @@
 
 
 HEAT_BASEYEAR = {
-    "cop_soil_total": "resources/"
-    + SECDIR
-    + "cops/cop_soil_total_elec_s{simpl}_{clusters}_{planning_horizons}.nc",
-    "cop_air_total": "resources/"
-    + SECDIR
-    + "cops/cop_air_total_elec_s{simpl}_{clusters}_{planning_horizons}.nc",
-    "existing_heating_distribution": "resources/"
-    + SECDIR
-    + "heating/existing_heating_distribution_s{simpl}_{clusters}_{planning_horizons}.csv",
+    "cop_soil_total": rules.build_cop_profiles.output.cop_soil_total,
+    "cop_air_total": rules.build_cop_profiles.output.cop_air_total,
+    "existing_heating_distribution": rules.build_existing_heating_distribution.output.existing_heating_distribution,
 }
 
 
@@ -24,17 +18,16 @@ rule add_existing_baseyear:
         costs=config["costs"],
     input:
         **branch(sector_enable["heat"], HEAT_BASEYEAR),
-        network=RESDIR
-        + "prenetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}_export.nc",
-        powerplants="resources/" + RDIR + "powerplants.csv",
-        busmap_s="resources/" + RDIR + "bus_regions/busmap_elec_s{simpl}.csv",
-        busmap="resources/" + RDIR + "bus_regions/busmap_elec_s{simpl}_{clusters}.csv",
+        network=rules.add_export.output.network,
+        powerplants=rules.build_powerplants.output.powerplants,
+        busmap_s=rules.simplify_network.output.busmap,
+        busmap=rules.cluster_network.output.busmap,
         # clustered_pop_layout="resources/"
         # + SECDIR
         # + "population_shares/pop_layout_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        costs="resources/" + RDIR + "costs_{planning_horizons}_sec.csv",
+        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec")
     output:
-        RESDIR
+        network=RESDIR
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
     wildcard_constraints:
         # TODO: The first planning_horizon needs to be aligned across scenarios
@@ -56,7 +49,9 @@ rule add_existing_baseyear:
 
 def input_profile_tech_brownfield(w):
     return {
-        f"profile_{tech}": f"resources/" + RDIR + "renewable_profiles/profile_{tech}.nc"
+        f"profile_{tech}": rules.build_renewable_profiles.output.profile.format(
+            technology=tech
+        )
         for tech in config["electricity"]["renewable_carriers"]
         if tech != "hydro"
     }
@@ -65,13 +60,9 @@ def input_profile_tech_brownfield(w):
 def solved_previous_horizon(w):
     planning_horizons = config["scenario"]["planning_horizons"]
     i = planning_horizons.index(int(w.planning_horizons))
-    planning_horizon_p = str(planning_horizons[i - 1])
-
-    return (
-        RESDIR
-        + "postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_"
-        + planning_horizon_p
-        + "_{discountrate}.nc"
+    prev_planning_horizon = str(planning_horizons[i - 1])
+    return rules.solve_network_myopic.output.network.format(
+        **{**dict(w), "planning_horizons": prev_planning_horizon}
     )
 
 
@@ -87,22 +78,15 @@ rule add_brownfield:
         carriers=config["electricity"]["renewable_carriers"],
     input:
         # unpack(input_profile_tech_brownfield),
-        simplify_busmap="resources/" + RDIR + "bus_regions/busmap_elec_s{simpl}.csv",
-        cluster_busmap="resources/"
-        + RDIR
-        + "bus_regions/busmap_elec_s{simpl}_{clusters}.csv",
-        network=RESDIR
-        + "prenetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}_export.nc",
+        simplify_busmap=rules.simplify_network.output.busmap,
+        cluster_busmap=rules.cluster_network.output.busmap,
+        network=rules.add_export.output.network,
         network_p=solved_previous_horizon,  #solved network at previous time step
-        costs="resources/" + RDIR + "costs_{planning_horizons}_sec.csv",
-        cop_soil_total="resources/"
-        + SECDIR
-        + "cops/cop_soil_total_elec_s{simpl}_{clusters}_{planning_horizons}.nc",
-        cop_air_total="resources/"
-        + SECDIR
-        + "cops/cop_air_total_elec_s{simpl}_{clusters}_{planning_horizons}.nc",
+        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec"),
+        cop_soil_total=rules.build_cop_profiles.output.cop_soil_total,
+        cop_air_total=rules.build_cop_profiles.output.cop_air_total,
     output:
-        RESDIR
+        network=RESDIR
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
     threads: 4
     resources:
@@ -135,8 +119,8 @@ rule solve_network_myopic:
     input:
         network=RESDIR
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sopts}_{planning_horizons}_{discountrate}.nc",
-        costs="resources/" + RDIR + "costs_{planning_horizons}_sec.csv",
-        configs=SDIR + "configs/config.yaml",  # included to trigger copy_config rule
+        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec"),
+        configs=rules.copy_config.output.config,  # included to trigger copy_config rule
         agg_p_nom_minmax=config["electricity"]["agg_p_nom_limits"]["file"],  # ensure the CSV with capacity constraints is copied into the shadow directory (needed on Windows, since shadowed scripts can’t access files outside `input`)
     output:
         network=RESDIR

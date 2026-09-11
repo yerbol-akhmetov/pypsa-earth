@@ -416,10 +416,7 @@ rule add_electricity:
             if str(fn).startswith("data/")
         },
         base_network=rules.base_network.output.network,
-        tech_costs=rules.process_cost_data.output.costs.format(
-            year=config["costs"]["year"],
-            scope="elec",
-        ),
+        tech_costs=rules.process_cost_data.output.costs.format(year=config["costs"]["year"], scope="elec"),
         powerplants=rules.build_powerplants.output.powerplants,
         #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
         #using this line instead of the following will test updated gadm shapes for MA.
@@ -458,10 +455,7 @@ rule simplify_network:
     input:
         **retrieve_subregion("simplify_network"),
         network=rules.add_electricity.output.network,
-        tech_costs=rules.process_cost_data.output.costs.format(
-            year=config["costs"]["year"],
-            scope="elec",
-        ),
+        tech_costs=rules.process_cost_data.output.costs.format(year=config["costs"]["year"], scope="elec"),
         regions_onshore=rules.build_bus_regions.output.regions_onshore,
         regions_offshore=rules.build_bus_regions.output.regions_offshore,
     output:
@@ -515,10 +509,7 @@ rule cluster_network:
             if config["enable"].get("custom_busmap", False)
             else []
         ),
-        tech_costs=rules.process_cost_data.output.costs.format(
-            year=config["costs"]["year"],
-            scope="elec",
-        ),
+        tech_costs=rules.process_cost_data.output.costs.format(year=config["costs"]["year"], scope="elec"),
     output:
         network=branch(
             config["augmented_line_connection"].get("add_to_snakefile", False) == True,
@@ -553,10 +544,7 @@ if config["augmented_line_connection"].get("add_to_snakefile") == True:
             hvdc_as_lines=config["electricity"]["hvdc_as_lines"],
             electricity=config["electricity"],
         input:
-            tech_costs=rules.process_cost_data.output.costs.format(
-                year=config["costs"]["year"],
-                scope="elec",
-            ),
+            tech_costs=rules.process_cost_data.output.costs.format(year=config["costs"]["year"], scope="elec"),
             network=rules.cluster_network.output.network,
             regions_onshore=rules.cluster_network.output.regions_onshore,
             regions_offshore=rules.cluster_network.output.regions_offshore,
@@ -585,10 +573,7 @@ rule add_extra_components:
         csp_model=config["renewable"]["csp"]["csp_model"],
     input:
         network=clustered_network,
-        tech_costs=rules.process_cost_data.output.costs.format(
-            year=config["costs"]["year"],
-            scope="elec",
-        ),
+        tech_costs=rules.process_cost_data.output.costs.format(year=config["costs"]["year"], scope="elec"),
     output:
         network="networks/" + RDIR + "elec_s{simpl}_{clusters}_ec.nc",
     log:
@@ -633,10 +618,7 @@ rule prepare_network:
     input:
         network=rules.add_extra_components.output.network,
         **emissions_input,
-        tech_costs=rules.process_cost_data.output.costs.format(
-            year=config["costs"]["year"],
-            scope="elec",
-        ),
+        tech_costs=rules.process_cost_data.output.costs.format(year=config["costs"]["year"], scope="elec"),
     output:
         network="networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:

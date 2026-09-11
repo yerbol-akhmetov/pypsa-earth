@@ -540,10 +540,7 @@ rule build_industry_demand:  #default data
         base_industry_totals=rules.build_base_industry_totals.output.base_industry_totals,
         industrial_database=rules.build_industrial_database.output.industrial_database,
         ammonia_production=rules.build_ammonia_production.output.ammonia_production,
-        costs=rules.process_cost_data.output.costs.format(
-            year="{planning_horizons}",
-            scope="sec",
-        ),
+        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec"),
         industry_growth_cagr="data/demand/industry_growth_cagr.csv",
     output:
         industrial_energy_demand_per_node="resources/"
@@ -646,10 +643,7 @@ rule prepare_sector_network:
             },
         ),
         network=rules.prepare_network.output.network,
-        costs=rules.process_cost_data.output.costs.format(
-            year="{planning_horizons}",
-            scope="sec",
-        ),
+        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec"),
         nodal_energy_totals=branch(
             sector_enable["rail_transport"] or sector_enable["agriculture"],
             rules.prepare_heat_data.output.nodal_energy_totals,
@@ -716,10 +710,7 @@ rule add_export:
         h2export=config["export"]["h2export"],
     input:
         export_ports=rules.prepare_ports.output.export_ports,
-        costs=rules.process_cost_data.output.costs.format(
-            year="{planning_horizons}",
-            scope="sec",
-        ),
+        costs=rules.process_cost_data.output.costs.format(year="{planning_horizons}", scope="sec"),
         ship_profile=rules.build_ship_profile.output.ship_profile,
         network=rules.prepare_sector_network.output.network,
         shapes_path=rules.cluster_network.output.regions_onshore,
